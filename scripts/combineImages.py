@@ -10,6 +10,7 @@ def combine_cards(card1, card2, target):
 
     CARD_WIDTH, CARD_HEIGHT = img1.size
 
+    # TODO improve the colour matching and maybe trim borders
     combined = Image.new('RGBA', (2*CARD_WIDTH, CARD_HEIGHT), color='#111111')
 
     combined.paste(img1, (0, 0), mask=img1)

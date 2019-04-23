@@ -1,63 +1,6 @@
 import json, os, requests, time, csv
 from pathvalidate import sanitize_filename
 
-def get_first_printings():
-    '''
-    Reads a JSON file from scryfall and creats a list of card objects
-    with only the first printing of each card
-    '''
-    dirname = os.path.dirname(__file__)
-    filename = os.path.join(dirname, '../bulkData/scryfall-default-cards.json')
-
-
-    # Would likely be faster and much more memory efficient to process
-    # one card at a time by reading single lines
-    with open(filename, 'r') as f:
-        file_json = json.load(f)
-
-    first_printings = []
-
-    for card in file_json:
-        # Process only if first printing from main set
-        if not card['reprint'] and len(card['set']) == 3:
-            try:
-                card_dict = {
-                    'name': card['name'],
-                    'set': card['set'],
-                    'image': card['image_uris']['png']
-                    }
-                first_printings.append(card_dict)
-            except KeyError:
-                # Only KeyErrors dectected are from double faced cards
-                # This could change and break things
-                card_dict = {
-                    'name': card['card_faces'][0]['name'],
-                    'set': card['set'],
-                    'image': card['card_faces'][0]['image_uris']['png']
-                    }
-                first_printings.append(card_dict)
-
-                card_dict = {
-                    'name': card['card_faces'][1]['name'],
-                    'set': card['set'],
-                    'image': card['card_faces'][1]['image_uris']['png']
-                    }
-                first_printings.append(card_dict)
-    return first_printings
-
-
-def card_list_to_dict(card_list):
-    '''
-    Takes list of card objects and returns them as a dict with card names as keys
-    '''
-    card_dict = dict()
-    for card in card_list:
-        name = card['name']
-        card_dict[name] = card
-
-    return card_dict
-
-
 def save_image_file(card):
     '''
     Takes a card object, requests its image and saves to file
@@ -73,11 +16,13 @@ def save_image_file(card):
     if not os.path.isfile(filepath):
         print(f'Downloading {name}')
         r = requests.get(image_url)
-        time.sleep(0.05)
+        # Sleep to avoid overloading api
+        time.sleep(0.075)
 
         with open(filepath, 'wb') as f:
             f.write(r.content)
     return filepath
+
 
 def get_cards_from_file(filename):
     '''
@@ -92,25 +37,30 @@ def get_cards_from_file(filename):
     return card_list
 
 
-if __name__ == '__main__':
+def create_splitcards_from_file(csv):
     from combineImages import combine_cards
-    card_list = get_first_printings()
-    card_dict = card_list_to_dict(card_list)
-    cards_to_find = get_cards_from_file('smallCardList.csv')
+    from getFirstPrintings import get_first_printings
+
+    card_dict = get_first_printings()
+    cards_to_find = get_cards_from_file(csv)
 
     for cards in cards_to_find:
-        img1 = save_image_file(card_dict[cards[0]])
-        img2 = save_image_file(card_dict[cards[1]])
-
-        dirname = os.path.dirname(__file__)
-
         filename = '../images/splitcards/' + \
                 sanitize_filename(cards[0]) + \
                 '-' + \
                 sanitize_filename(cards[1]) + \
                 '.png'
 
-        target = os.path.join(dirname, filename)
+        if not os.path.isfile(filename):
+            img1 = save_image_file(card_dict[cards[0]])
+            img2 = save_image_file(card_dict[cards[1]])
 
-        print(f'Combining {target}')
-        combine_cards(img1, img2, target)
+            dirname = os.path.dirname(__file__)
+
+            target = os.path.join(dirname, filename)
+
+            print(f'Combining {target}')
+            combine_cards(img1, img2, target)
+
+if __name__ == '__main__':
+    create_splitcards_from_file('smallCardList.csv')
