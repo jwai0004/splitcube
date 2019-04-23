@@ -1,4 +1,4 @@
-import json, os, requests
+import json, os, requests, time
 from pathvalidate import sanitize_filename
 
 def get_first_printings():
@@ -40,22 +40,37 @@ def get_first_printings():
     return first_printings
 
 
-def save_image_file(image_url, name):
-    r = requests.get(image_url)
+def card_list_to_dict(card_list):
+    card_dict = dict()
+    for card in card_list:
+        name = card['name']
+        card_dict[name] = card
+
+    return card_dict
+
+
+def save_image_file(card):
+
+    name = card['name']
+    image_url = card['image']
+
 
     dirname = os.path.dirname(__file__)
     filename = '../images/' + sanitize_filename(name) + '.jpg'
     filepath = os.path.join(dirname, filename)
 
-    with open(filepath, 'wb') as f:
-        f.write(r.content)
+    if not os.path.isfile(filepath):
+        r = requests.get(image_url)
+        time.sleep(0.05)
+
+        with open(filepath, 'wb') as f:
+            f.write(r.content)
+
 
 if __name__ == '__main__':
-    import random, time
     card_list = get_first_printings()
-    for _ in range(10):
-        ind = random.randint(0, len(card_list))
-        print(card_list[ind]['name'])
-        save_image_file(card_list[ind]['image'], card_list[ind]['name'])
-        # Sleep for 100ms for around 10 requests per second
-        time.sleep(0.1)
+    card_dict = card_list_to_dict(card_list)
+    cards_to_find = ['Jace, the Mind Sculptor', 'Turn // Burn', 'Volcanic Island']
+
+    for card in cards_to_find:
+        save_image_file(card_dict[card])
