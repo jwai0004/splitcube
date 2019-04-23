@@ -24,7 +24,7 @@ def get_first_printings():
                 card_dict = {
                     'name': card['name'],
                     'set': card['set'],
-                    'image': card['image_uris']['large']
+                    'image': card['image_uris']['png']
                     }
                 first_printings.append(card_dict)
             except KeyError:
@@ -33,14 +33,14 @@ def get_first_printings():
                 card_dict = {
                     'name': card['card_faces'][0]['name'],
                     'set': card['set'],
-                    'image': card['card_faces'][0]['image_uris']['large']
+                    'image': card['card_faces'][0]['image_uris']['png']
                     }
                 first_printings.append(card_dict)
 
                 card_dict = {
                     'name': card['card_faces'][1]['name'],
                     'set': card['set'],
-                    'image': card['card_faces'][1]['image_uris']['large']
+                    'image': card['card_faces'][1]['image_uris']['png']
                     }
                 first_printings.append(card_dict)
     return first_printings
@@ -61,39 +61,56 @@ def card_list_to_dict(card_list):
 def save_image_file(card):
     '''
     Takes a card object, requests its image and saves to file
+    returns filepath
     '''
     name = card['name']
     image_url = card['image']
 
     dirname = os.path.dirname(__file__)
-    filename = '../images/' + sanitize_filename(name) + '.jpg'
+    filename = '../images/' + sanitize_filename(name) + '.png'
     filepath = os.path.join(dirname, filename)
 
     if not os.path.isfile(filepath):
+        print(f'Downloading {name}')
         r = requests.get(image_url)
         time.sleep(0.05)
 
         with open(filepath, 'wb') as f:
             f.write(r.content)
-
+    return filepath
 
 def get_cards_from_file(filename):
     '''
-    Gets a card name card
+    Reads pairs of cards from file and returns them as list of pairs
     '''
     card_list = []
     with open(filename, 'r') as f:
         reader = csv.reader(f)
         for row in reader:
             if row:
-                card_list.append(row[0])
+                card_list.append((row[0], row[1]))
     return card_list
 
 
 if __name__ == '__main__':
+    from combineImages import combine_cards
     card_list = get_first_printings()
     card_dict = card_list_to_dict(card_list)
     cards_to_find = get_cards_from_file('smallCardList.csv')
 
-    for card in cards_to_find:
-        save_image_file(card_dict[card])
+    for cards in cards_to_find:
+        img1 = save_image_file(card_dict[cards[0]])
+        img2 = save_image_file(card_dict[cards[1]])
+
+        dirname = os.path.dirname(__file__)
+
+        filename = '../images/splitcards/' + \
+                sanitize_filename(cards[0]) + \
+                '-' + \
+                sanitize_filename(cards[1]) + \
+                '.png'
+
+        target = os.path.join(dirname, filename)
+
+        print(f'Combining {target}')
+        combine_cards(img1, img2, target)
