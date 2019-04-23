@@ -1,4 +1,5 @@
 import requests
+import os
 
 payload = { 'fuzzy' : 'Jace the mind',
             'format' : 'image',
@@ -9,5 +10,8 @@ named_url = 'https://api.scryfall.com/cards/named'
 
 r = requests.get(named_url, payload)
 
-with open('images/test.jpg', 'wb') as f:
+dirname = os.path.dirname(__file__)
+filename = os.path.join(dirname, '../images/test.jpg')
+
+with open(filename, 'wb') as f:
     f.write(r.content)
