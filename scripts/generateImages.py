@@ -1,6 +1,6 @@
 import json, os, requests, time, csv
 from pathvalidate import sanitize_filename
-import paths
+import combineImages, getFirstPrintings, paths
 
 def save_image_file(card):
     '''
@@ -37,14 +37,20 @@ def get_cards_from_file(filename):
 
 
 def create_splitcards_from_file(csv):
-    from combineImages import combine_cards
-    from getFirstPrintings import get_first_printings
+    '''
+    Takes the path to a csv file and generates images for all cards in the file
+    returns a list of all split card_names
+    '''
+    # TODO Refactor this, it seems to do a lot and have lots of side effects and a weird
+    # return value
 
-    card_dict = get_first_printings()
+    card_dict = getFirstPrintings.get_first_printings()
     cards_to_find = get_cards_from_file(csv)
+    card_name_list = []
 
     for cards in cards_to_find:
         card_name = cards[0] + '-' + cards[1]
+        card_name_list.append(sanitize_filename(card_name))
         filename = paths.imageName(card_name, subfolder='splitcards/')
 
         if not os.path.isfile(filename):
@@ -52,8 +58,27 @@ def create_splitcards_from_file(csv):
             img2 = save_image_file(card_dict[cards[1]])
 
             print(f'Combining {filename}')
-            combine_cards(img1, img2, filename)
+            combineImages.combine_cards(img1, img2, filename)
+
+    return card_name_list
+
+
+def generate_PDF(card_list):
+
+    path_list = [ paths.imageName(c, subfolder='splitcards') for c in card_list ]
+
+    # Break list into sublists of length 9
+    page_chunks = [ path_list[x:x+9] for x in range(0, len(path_list), 9) ]
+
+    pages = [
+            combineImages.create_page(chunk, f'page{i}')
+            for i, chunk in enumerate(page_chunks)
+            ]
+
+    combineImages.images_to_pdf(pages)
+    print(f'{len(pages)} pages were generated')
 
 if __name__ == '__main__':
     csv_path = paths.projectPath(suffix='smallCardList.csv')
-    create_splitcards_from_file(csv_path)
+    card_list = create_splitcards_from_file(csv_path)
+    generate_PDF(card_list)
