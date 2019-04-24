@@ -58,24 +58,3 @@ def images_to_pdf(images):
 
     filename = paths.projectPath(suffix='SplitCube.pdf')
     pdf.output(filename, 'F')
-
-
-if __name__ == '__main__':
-
-    card_list = [
-            "Siege Rhino-Verdant Catacombs",
-            "Jace, the Mind Sculptor-Ancestral Recall",
-            "Turn  Burn-Niv-Mizzet, Parun",
-            "Garruk Wildspeaker-Birthing Pod",
-            "History of Benalia-Balance",
-            "Aether Adept-True-Name Nemesis",
-            "Volcanic Island-Steam Vents",
-            "Library of Alexandria-Sword of Feast and Famine",
-            "Tarmogoyf-Life from the Loam",
-            ]
-
-
-    path_list = [ paths.imageName(c, subfolder='splitcards') for c in card_list]
-
-    page = create_page(path_list, '1')
-    images_to_pdf([page, page])
