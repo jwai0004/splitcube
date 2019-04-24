@@ -1,5 +1,6 @@
 import json, os, requests, time, csv
 from pathvalidate import sanitize_filename
+import paths
 
 def save_image_file(card):
     '''
@@ -9,9 +10,7 @@ def save_image_file(card):
     name = card['name']
     image_url = card['image']
 
-    dirname = os.path.dirname(__file__)
-    filename = '../images/' + sanitize_filename(name) + '.png'
-    filepath = os.path.join(dirname, filename)
+    filepath = paths.imageName(name, subfolder='cards/')
 
     if not os.path.isfile(filepath):
         print(f'Downloading {name}')
@@ -45,22 +44,16 @@ def create_splitcards_from_file(csv):
     cards_to_find = get_cards_from_file(csv)
 
     for cards in cards_to_find:
-        filename = '../images/splitcards/' + \
-                sanitize_filename(cards[0]) + \
-                '-' + \
-                sanitize_filename(cards[1]) + \
-                '.png'
+        card_name = cards[0] + '-' + cards[1]
+        filename = paths.imageName(card_name, subfolder='splitcards/')
 
         if not os.path.isfile(filename):
             img1 = save_image_file(card_dict[cards[0]])
             img2 = save_image_file(card_dict[cards[1]])
 
-            dirname = os.path.dirname(__file__)
-
-            target = os.path.join(dirname, filename)
-
-            print(f'Combining {target}')
-            combine_cards(img1, img2, target)
+            print(f'Combining {filename}')
+            combine_cards(img1, img2, filename)
 
 if __name__ == '__main__':
-    create_splitcards_from_file('smallCardList.csv')
+    csv_path = paths.projectPath(suffix='data/smallCardList.csv')
+    create_splitcards_from_file(csv_path)

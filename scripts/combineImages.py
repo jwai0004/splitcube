@@ -1,6 +1,6 @@
 from PIL import Image
 from fpdf import FPDF
-import os
+import paths
 
 
 def combine_cards(card1, card2, target):
@@ -31,16 +31,18 @@ def create_page(image_list, name):
     img = Image.open(image_list[0])
     CARD_WIDTH, CARD_HEIGHT = img.size
 
-    grid = Image.new('RGBA', (3*CARD_WIDTH, 3*CARD_HEIGHT))
+    # Dramatic performance improvement by changing this from RGBA to RGB
+    grid = Image.new('RGB', (3*CARD_WIDTH, 3*CARD_HEIGHT))
 
     for j in range(3):
         for i in range(3):
-            img = Image.open(image_list[j*3 + i])
-            grid.paste(img, (i*CARD_WIDTH, j*CARD_HEIGHT))
+            try:
+                img = Image.open(image_list[j*3 + i])
+                grid.paste(img, (i*CARD_WIDTH, j*CARD_HEIGHT))
+            except:
+                break
 
-
-    dirname = os.path.dirname(__file__)
-    filename = os.path.join(dirname, '../images/pages/' + name + '.png')
+    filename = paths.imageName(name, subfolder='pages')
     grid.save(filename)
 
     return filename
@@ -53,7 +55,9 @@ def images_to_pdf(images):
     for image in images:
         pdf.add_page()
         pdf.image(image, 10, 15, 189, 264)
-    pdf.output('SplitCube.pdf', 'F')
+
+    filename = paths.projectPath(suffix='SplitCube.pdf')
+    pdf.output(filename, 'F')
 
 
 if __name__ == '__main__':
@@ -70,10 +74,8 @@ if __name__ == '__main__':
             "Tarmogoyf-Life from the Loam",
             ]
 
-    path_list = [ '../images/splitcards/' + c + '.png' for c in card_list ]
-    dirname = os.path.dirname(__file__)
 
-    path_list = [ os.path.join(dirname, path) for path in path_list ]
+    path_list = [ paths.imageName(c, subfolder='splitcards') for c in card_list]
 
     page = create_page(path_list, '1')
     images_to_pdf([page, page])

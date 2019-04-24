@@ -1,6 +1,8 @@
 import json, os, pickle
+import paths
+import requests
 
-PKL_FILE = 'firstPrinting.pkl'
+PKL_FILE = paths.projectPath(suffix='data/firstPrintings.pkl')
 
 def get_first_printings():
     '''
@@ -12,9 +14,21 @@ def get_first_printings():
     if os.path.isfile(PKL_FILE):
         return read_cards_from_file(PKL_FILE)
 
-    dirname = os.path.dirname(__file__)
-    filename = os.path.join(dirname, '../bulkData/scryfall-default-cards.json')
+    filename = paths.projectPath(suffix='data/scryfall-default-cards.json')
 
+    if not os.path.isfile(filename):
+        print('Default cards not found, downloading from scryfall')
+        bulk_json = requests.get('https://api.scryfall.com/bulk-data')
+        bulk = json.loads(bulk_json.content.decode('utf-8'))
+
+        default_url = bulk['data'][0]['permalink_uri']
+
+        default_cards = requests.get(default_url)
+
+        with open(filename, 'wb') as f:
+            f.write(default_cards.content)
+
+        print(f'Default cards saved as {filename}')
 
     # Would likely be faster and much more memory efficient to process
     # one card at a time by reading single lines
