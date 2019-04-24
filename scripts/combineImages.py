@@ -38,9 +38,10 @@ def create_page(image_list, name):
         for i in range(3):
             try:
                 img = Image.open(image_list[j*3 + i])
-                grid.paste(img, (i*CARD_WIDTH, j*CARD_HEIGHT))
             except:
-                break
+                img = Image.new('RGB', (CARD_WIDTH, CARD_HEIGHT), color='#FFFFFF')
+
+            grid.paste(img, (i*CARD_WIDTH, j*CARD_HEIGHT))
 
     filename = paths.imageName(name, subfolder='pages')
     grid.save(filename)
