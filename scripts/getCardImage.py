@@ -55,5 +55,5 @@ def create_splitcards_from_file(csv):
             combine_cards(img1, img2, filename)
 
 if __name__ == '__main__':
-    csv_path = paths.projectPath(suffix='data/smallCardList.csv')
+    csv_path = paths.projectPath(suffix='smallCardList.csv')
     create_splitcards_from_file(csv_path)
