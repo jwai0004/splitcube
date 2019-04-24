@@ -1,6 +1,0 @@
-# filters scryfall card list json into name set of the first printing
-bat scryfall-default-cards.json  | jq '.[] | select(.reprint == false) | {name: .name, set: .set}' >> firstPrintings.json
-
-
-# Puts double quotes around each line in file
-awk '{ printf "\"%s\"\n", $0 }' file
